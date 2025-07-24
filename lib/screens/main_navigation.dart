@@ -41,8 +41,8 @@ class _MainNavigationState extends State<MainNavigation> {
             label: 'Timeline',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Kanban',
+            icon: Icon(Icons.wallet),
+            label: 'Wallets',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
