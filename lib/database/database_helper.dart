@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:vibe_kanban/models/board.dart';
 import 'package:vibe_kanban/models/kanban_list.dart';
 import 'package:vibe_kanban/models/card.dart';
+import 'package:vibe_kanban/database/web_storage_helper.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -71,17 +73,26 @@ class DatabaseHelper {
 
   // Board CRUD operations
   Future<int> insertBoard(Board board) async {
+    if (kIsWeb) {
+      return await WebStorageHelper.instance.insertBoard(board);
+    }
     final db = await instance.database;
     return await db.insert('boards', board.toMap());
   }
 
   Future<List<Board>> getAllBoards() async {
+    if (kIsWeb) {
+      return await WebStorageHelper.instance.getAllBoards();
+    }
     final db = await instance.database;
     final result = await db.query('boards', orderBy: 'created_at DESC');
     return result.map((json) => Board.fromMap(json)).toList();
   }
 
   Future<Board?> getBoard(int id) async {
+    if (kIsWeb) {
+      return await WebStorageHelper.instance.getBoard(id);
+    }
     final db = await instance.database;
     final maps = await db.query(
       'boards',
@@ -95,6 +106,9 @@ class DatabaseHelper {
   }
 
   Future<int> updateBoard(Board board) async {
+    if (kIsWeb) {
+      return await WebStorageHelper.instance.updateBoard(board);
+    }
     final db = await instance.database;
     return await db.update(
       'boards',
@@ -105,6 +119,9 @@ class DatabaseHelper {
   }
 
   Future<int> deleteBoard(int id) async {
+    if (kIsWeb) {
+      return await WebStorageHelper.instance.deleteBoard(id);
+    }
     final db = await instance.database;
     return await db.delete(
       'boards',
@@ -115,11 +132,17 @@ class DatabaseHelper {
 
   // List CRUD operations
   Future<int> insertList(KanbanList list) async {
+    if (kIsWeb) {
+      return await WebStorageHelper.instance.insertList(list);
+    }
     final db = await instance.database;
     return await db.insert('lists', list.toMap());
   }
 
   Future<List<KanbanList>> getListsByBoard(int boardId) async {
+    if (kIsWeb) {
+      return await WebStorageHelper.instance.getListsByBoard(boardId);
+    }
     final db = await instance.database;
     final result = await db.query(
       'lists',
@@ -131,6 +154,9 @@ class DatabaseHelper {
   }
 
   Future<int> updateList(KanbanList list) async {
+    if (kIsWeb) {
+      return await WebStorageHelper.instance.updateList(list);
+    }
     final db = await instance.database;
     return await db.update(
       'lists',
@@ -141,6 +167,9 @@ class DatabaseHelper {
   }
 
   Future<int> deleteList(int id) async {
+    if (kIsWeb) {
+      return await WebStorageHelper.instance.deleteList(id);
+    }
     final db = await instance.database;
     return await db.delete(
       'lists',
@@ -151,11 +180,17 @@ class DatabaseHelper {
 
   // Card CRUD operations
   Future<int> insertCard(KanbanCard card) async {
+    if (kIsWeb) {
+      return await WebStorageHelper.instance.insertCard(card);
+    }
     final db = await instance.database;
     return await db.insert('cards', card.toMap());
   }
 
   Future<List<KanbanCard>> getCardsByList(int listId) async {
+    if (kIsWeb) {
+      return await WebStorageHelper.instance.getCardsByList(listId);
+    }
     final db = await instance.database;
     final result = await db.query(
       'cards',
@@ -167,6 +202,9 @@ class DatabaseHelper {
   }
 
   Future<int> updateCard(KanbanCard card) async {
+    if (kIsWeb) {
+      return await WebStorageHelper.instance.updateCard(card);
+    }
     final db = await instance.database;
     return await db.update(
       'cards',
@@ -177,6 +215,9 @@ class DatabaseHelper {
   }
 
   Future<int> deleteCard(int id) async {
+    if (kIsWeb) {
+      return await WebStorageHelper.instance.deleteCard(id);
+    }
     final db = await instance.database;
     return await db.delete(
       'cards',
@@ -186,6 +227,10 @@ class DatabaseHelper {
   }
 
   Future close() async {
+    if (kIsWeb) {
+      await WebStorageHelper.instance.close();
+      return;
+    }
     final db = await instance.database;
     db.close();
   }

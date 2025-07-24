@@ -1,10 +1,16 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:vibe_kanban/database/database_helper.dart';
 import 'package:vibe_kanban/screens/main_navigation.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await DatabaseHelper.instance.database;
+  
+  // Initialize database based on platform
+  if (!kIsWeb) {
+    await DatabaseHelper.instance.database;
+  }
+  
   runApp(const VibeKanbanApp());
 }
 
