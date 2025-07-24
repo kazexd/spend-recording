@@ -5,6 +5,8 @@ import 'package:sqflite/sqflite.dart';
 import 'package:vibe_kanban/models/board.dart';
 import 'package:vibe_kanban/models/kanban_list.dart';
 import 'package:vibe_kanban/models/card.dart';
+import 'package:vibe_kanban/models/wallet.dart';
+import 'package:vibe_kanban/models/transaction.dart';
 import 'package:vibe_kanban/database/web_storage_helper.dart';
 
 class DatabaseHelper {
@@ -25,8 +27,9 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB,
+      onUpgrade: _upgradeDB,
     );
   }
 
@@ -69,6 +72,66 @@ class DatabaseHelper {
         FOREIGN KEY (list_id) REFERENCES lists (id) ON DELETE CASCADE
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE wallets (
+        id $idType,
+        name $textType,
+        currency $textType,
+        balance REAL NOT NULL DEFAULT 0.0,
+        created_at $textType,
+        updated_at $textType
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE transactions (
+        id $idType,
+        wallet_id $integerType,
+        title $textType,
+        description TEXT,
+        amount REAL NOT NULL,
+        type $textType,
+        category $textType,
+        created_at $textType,
+        updated_at $textType,
+        FOREIGN KEY (wallet_id) REFERENCES wallets (id) ON DELETE CASCADE
+      )
+    ''');
+  }
+
+  Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      const idType = 'INTEGER PRIMARY KEY AUTOINCREMENT';
+      const textType = 'TEXT NOT NULL';
+      const integerType = 'INTEGER NOT NULL';
+
+      await db.execute('''
+        CREATE TABLE wallets (
+          id $idType,
+          name $textType,
+          currency $textType,
+          balance REAL NOT NULL DEFAULT 0.0,
+          created_at $textType,
+          updated_at $textType
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE transactions (
+          id $idType,
+          wallet_id $integerType,
+          title $textType,
+          description TEXT,
+          amount REAL NOT NULL,
+          type $textType,
+          category $textType,
+          created_at $textType,
+          updated_at $textType,
+          FOREIGN KEY (wallet_id) REFERENCES wallets (id) ON DELETE CASCADE
+        )
+      ''');
+    }
   }
 
   // Board CRUD operations
@@ -223,6 +286,134 @@ class DatabaseHelper {
       'cards',
       where: 'id = ?',
       whereArgs: [id],
+    );
+  }
+
+  // Wallet CRUD operations
+  Future<int> insertWallet(Wallet wallet) async {
+    final db = await instance.database;
+    return await db.insert('wallets', wallet.toMap());
+  }
+
+  Future<List<Wallet>> getAllWallets() async {
+    final db = await instance.database;
+    final result = await db.query('wallets', orderBy: 'created_at DESC');
+    return result.map((json) => Wallet.fromMap(json)).toList();
+  }
+
+  Future<Wallet?> getWallet(int id) async {
+    final db = await instance.database;
+    final maps = await db.query(
+      'wallets',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (maps.isNotEmpty) {
+      return Wallet.fromMap(maps.first);
+    }
+    return null;
+  }
+
+  Future<int> updateWallet(Wallet wallet) async {
+    final db = await instance.database;
+    return await db.update(
+      'wallets',
+      wallet.toMap(),
+      where: 'id = ?',
+      whereArgs: [wallet.id],
+    );
+  }
+
+  Future<int> deleteWallet(int id) async {
+    final db = await instance.database;
+    return await db.delete(
+      'wallets',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // Transaction CRUD operations
+  Future<int> insertTransaction(Transaction transaction) async {
+    final db = await instance.database;
+    return await db.insert('transactions', transaction.toMap());
+  }
+
+  Future<List<Transaction>> getTransactionsByWallet(int walletId) async {
+    final db = await instance.database;
+    final result = await db.query(
+      'transactions',
+      where: 'wallet_id = ?',
+      whereArgs: [walletId],
+      orderBy: 'created_at DESC',
+    );
+    return result.map((json) => Transaction.fromMap(json)).toList();
+  }
+
+  Future<List<Transaction>> getAllTransactions() async {
+    final db = await instance.database;
+    final result = await db.query('transactions', orderBy: 'created_at DESC');
+    return result.map((json) => Transaction.fromMap(json)).toList();
+  }
+
+  Future<Transaction?> getTransaction(int id) async {
+    final db = await instance.database;
+    final maps = await db.query(
+      'transactions',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (maps.isNotEmpty) {
+      return Transaction.fromMap(maps.first);
+    }
+    return null;
+  }
+
+  Future<int> updateTransaction(Transaction transaction) async {
+    final db = await instance.database;
+    return await db.update(
+      'transactions',
+      transaction.toMap(),
+      where: 'id = ?',
+      whereArgs: [transaction.id],
+    );
+  }
+
+  Future<int> deleteTransaction(int id) async {
+    final db = await instance.database;
+    return await db.delete(
+      'transactions',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // Helper method to update wallet balance based on transactions
+  Future<void> updateWalletBalance(int walletId) async {
+    final db = await instance.database;
+    final transactions = await getTransactionsByWallet(walletId);
+    
+    double balance = 0.0;
+    for (final transaction in transactions) {
+      switch (transaction.type) {
+        case TransactionType.income:
+          balance += transaction.amount;
+          break;
+        case TransactionType.expense:
+          balance -= transaction.amount;
+          break;
+        case TransactionType.transfer:
+          // For transfers, you might need additional logic
+          // depending on whether it's incoming or outgoing
+          break;
+      }
+    }
+
+    await db.update(
+      'wallets',
+      {'balance': balance, 'updated_at': DateTime.now().toIso8601String()},
+      where: 'id = ?',
+      whereArgs: [walletId],
     );
   }
 
