@@ -37,8 +37,8 @@ class _MainNavigationState extends State<MainNavigation> {
         unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
+            icon: Icon(Icons.description),
+            label: 'Timeline',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.dashboard),
