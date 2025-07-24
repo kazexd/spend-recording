@@ -6,7 +6,7 @@ import 'package:vibe_kanban/models/board.dart';
 import 'package:vibe_kanban/models/kanban_list.dart';
 import 'package:vibe_kanban/models/card.dart';
 import 'package:vibe_kanban/models/wallet.dart';
-import 'package:vibe_kanban/models/transaction.dart';
+import 'package:vibe_kanban/models/transaction.dart' as model;
 import 'package:vibe_kanban/database/web_storage_helper.dart';
 
 class DatabaseHelper {
@@ -334,12 +334,12 @@ class DatabaseHelper {
   }
 
   // Transaction CRUD operations
-  Future<int> insertTransaction(Transaction transaction) async {
+  Future<int> insertTransaction(model.Transaction transaction) async {
     final db = await instance.database;
     return await db.insert('transactions', transaction.toMap());
   }
 
-  Future<List<Transaction>> getTransactionsByWallet(int walletId) async {
+  Future<List<model.Transaction>> getTransactionsByWallet(int walletId) async {
     final db = await instance.database;
     final result = await db.query(
       'transactions',
@@ -347,16 +347,16 @@ class DatabaseHelper {
       whereArgs: [walletId],
       orderBy: 'created_at DESC',
     );
-    return result.map((json) => Transaction.fromMap(json)).toList();
+    return result.map((json) => model.Transaction.fromMap(json)).toList();
   }
 
-  Future<List<Transaction>> getAllTransactions() async {
+  Future<List<model.Transaction>> getAllTransactions() async {
     final db = await instance.database;
     final result = await db.query('transactions', orderBy: 'created_at DESC');
-    return result.map((json) => Transaction.fromMap(json)).toList();
+    return result.map((json) => model.Transaction.fromMap(json)).toList();
   }
 
-  Future<Transaction?> getTransaction(int id) async {
+  Future<model.Transaction?> getTransaction(int id) async {
     final db = await instance.database;
     final maps = await db.query(
       'transactions',
@@ -364,12 +364,12 @@ class DatabaseHelper {
       whereArgs: [id],
     );
     if (maps.isNotEmpty) {
-      return Transaction.fromMap(maps.first);
+      return model.Transaction.fromMap(maps.first);
     }
     return null;
   }
 
-  Future<int> updateTransaction(Transaction transaction) async {
+  Future<int> updateTransaction(model.Transaction transaction) async {
     final db = await instance.database;
     return await db.update(
       'transactions',
@@ -396,13 +396,13 @@ class DatabaseHelper {
     double balance = 0.0;
     for (final transaction in transactions) {
       switch (transaction.type) {
-        case TransactionType.income:
+        case model.TransactionType.income:
           balance += transaction.amount;
           break;
-        case TransactionType.expense:
+        case model.TransactionType.expense:
           balance -= transaction.amount;
           break;
-        case TransactionType.transfer:
+        case model.TransactionType.transfer:
           // For transfers, you might need additional logic
           // depending on whether it's incoming or outgoing
           break;
