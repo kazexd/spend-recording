@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vibe_kanban/database/database_helper.dart';
-import 'package:vibe_kanban/screens/kanban_board.dart';
+import 'package:vibe_kanban/screens/main_navigation.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,7 +19,7 @@ class VibeKanbanApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         useMaterial3: true,
       ),
-      home: const KanbanBoard(),
+      home: const MainNavigation(),
     );
   }
 }
